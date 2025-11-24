@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vite SMS • Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://js.flutterwave.com/v3"></script>
+    <style>
+        :root{--primary:#4361ee;--green:#10b981;--bg:#f8fafc;--card-bg:rgba(255,255,255,0.95);--text:#0f172a;--light:#64748b;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);padding-bottom:160px;}
+        .topbar{position:fixed;top:0;left:0;right:0;height:72px;background:white;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:1000;box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+        .hamburger{font-size:26px;cursor:pointer;color:#475569;}
+        .logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:24px;background:linear-gradient(90deg,#10b981,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .logo img{height:38px;border-radius:8px;}
+        .right-side{display:flex;align-items:center;gap:16px;}
+        .wallet-pill{background:var(--primary);color:white;padding:8px 18px;border-radius:50px;font-weight:800;font-size:17px;box-shadow:0 4px 15px rgba(67,97,238,0.3);}
+        .profile-btn{width:44px;height:44px;background:#e0e7ff;color:#6366f1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;}
+        .profile-dropdown{position:absolute;top:78px;right:12px;width:280px;background:white;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18);opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s;z-index:999;}
+        .profile-dropdown.show{opacity:1;visibility:visible;transform:translateY(0);}
+        .profile-header{padding:20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;text-align:center;}
+        .profile-header .avatar{width:68px;height:68px;background:white;color:#6366f1;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold;}
+        .profile-links a{display:flex;align-items:center;gap:16px;padding:16px 20px;color:#1e293b;text-decoration:none;border-bottom:1px solid #f1f5f9;transition:.2s;}
+        .profile-links a:hover{background:#f8fafc;}
+        .profile-links a:last-child{color:#ef4444;border:none;}
+        .sidebar{position:fixed;top:0;left:-300px;width:280px;height:100vh;background:rgba(15,23,42,0.98);backdrop-filter:blur(20px);padding:100px 20px 40px;transition:.4s;z-index:999;color:white;}
+        .sidebar.active{left:0;}
+        .sidebar h3{font-size:13px;color:#94a3b8;margin:32px 0 12px 20px;text-transform:uppercase;letter-spacing:1px;}
+        .sidebar a{display:block;padding:14px 20px;color:white;text-decoration:none;font-weight:600;border-radius:12px;margin:4px 12px;transition:.3s;}
+        .sidebar a:hover,.sidebar a.active{background:rgba(91,108,248,0.3);padding-left:28px;}
+        .sidebar a i{width:30px;}
+        .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:.4s;z-index:998;}
+        .overlay.active{opacity:1;pointer-events:auto;}
+        .content{margin-top:88px;padding:0 16px;}
+        .breadcrumb{color:#94a3b8;font-weight:600;margin:16px 0;font-size:15px;}
+        .card{margin:16px 0;background:var(--card-bg);border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08);transition:.3s;}
+        .card:hover{transform:translateY(-6px);}
+        .card-content{padding:24px;display:flex;align-items:center;justify-content:space-between;}
+        .card-left{display:flex;align-items:center;gap:18px;}
+        .icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;color:white;}
+        .wallet .icon{background:linear-gradient(135deg,#4361ee,#3b82f6);}
+        .account .icon{background:linear-gradient(135deg,#10b981,#059669);}
+        .numbers .icon{background:linear-gradient(135deg,#fb923c,#f97316);}
+        .recharge .icon{background:linear-gradient(135deg,#a855f7,#d946ef);}
+        .info h3{font-size:14px;color:var(--light);margin-bottom:4px;}
+        .info .value{font-size:28px;font-weight:900;}
+        button.main{background:var(--primary);color:white;border:none;padding:12px 24px;border-radius:12px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(67,97,238,0.3);}
+        #virtualAccount{margin-top:16px;padding:16px;background:#ecfdf5;border-radius:12px;}
+        .section-title{padding:32px 16px 12px;font-size:20px;font-weight:900;display:flex;justify-content:space-between;align-items:center;}
+        .section-title a{color:var(--primary);font-size:14px;font-weight:600;text-decoration:none;}
+        .fab-container{position:fixed;bottom:0;left:0;right:0;padding:20px 30px;display:flex;justify-content:space-between;z-index:997;pointer-events:none;}
+        .fab{width:76px;height:76px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-weight:800;font-size:13px;box-shadow:0 15px 35px rgba(0,0,0,0.3);cursor:pointer;pointer-events:auto;transition:.3s;}
+        .fab:hover{transform:translateY(-8px);}
+        .fab.whatsapp{background:linear-gradient(135deg,#25d366,#128c7e);}
+        .fab.transactions{background:linear-gradient(135deg,#4361ee,#3b82f6);}
+        .fab i{font-size:32px;margin-bottom:4px;}
+        .hidden{display:none;}
+        .loading{text-align:center;padding:80px 20px;color:#64748b;font-size:18px;}
+    </style>
+</head>
+<body>
+
+    <!-- YOUR ORIGINAL TOP BAR -->
+    <div class="topbar">
+        <div class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+        <div class="logo">
+            <img src="https://i.postimg.cc/P5KzmGCZ/freepik-assistant-39569.png" alt="logo">
+            VITE SMS
+        </div>
+        <div class="right-side">
+            <div class="wallet-pill" id="walletBalance">₦0</div>
+            <div class="profile-btn" onclick="toggleProfile()"><i class="far fa-user"></i></div>
+        </div>
+    </div>
+
+    <!-- YOUR ORIGINAL PROFILE DROPDOWN -->
+    <div class="profile-dropdown" id="profileMenu">
+        <div class="profile-header">
+            <div class="avatar" id="userInitial">V</div>
+            <h4 id="userName">Loading...</h4>
+            <p id="userEmail">Loading...</p>
+        </div>
+        <div class="profile-links">
+            <a href="#"><i class="far fa-user"></i> Profile</a>
+            <a href="buy.html"><i class="fas fa-phone"></i> Buy Numbers</a>
+            <a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        </div>
+    </div>
+
+    <!-- YOUR ORIGINAL SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <h3>Dashboard</h3>
+        <a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a>
+        <h3>SERVICES</h3>
+        <a href="buy.html"><i class="fas fa-phone"></i> Buy Numbers</a>
+        <a href="#"><i class="fas fa-wallet"></i> Fund Wallet</a>
+        <h3>HISTORY</h3>
+        <a href="#"><i class="fas fa-history"></i> Numbers History</a>
+        <a href="#"><i class="fas fa-exchange-alt"></i> Transaction History</a>
+        <h3>SUPPORT</h3>
+        <a href="https://wa.me/2348100000000" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp Support</a>
+    </div>
+    <div class="overlay" onclick="toggleMenu()"></div>
+
+    <!-- YOUR ORIGINAL CONTENT -->
+    <div class="content">
+        <div class="breadcrumb">Dashboard / Home</div>
+
+        <div id="loadingScreen" class="loading"><h2>Loading your account...</h2></div>
+        <div id="mainDashboard" class="hidden">
+
+            <!-- Wallet Balance -->
+            <div class="card wallet">
+                <div class="card-content">
+                    <div class="card-left">
+                        <div class="icon"><i class="fas fa-wallet"></i></div>
+                        <div class="info">
+                            <h3>Wallet Balance</h3>
+                            <div class="value" id="balanceDisplay">₦0</div>
+                        </div>
+                    </div>
+                    <button class="main" onclick="payWithFlutterwave()">Recharge</button>
+                </div>
+            </div>
+
+            <!-- UNIQUE VIRTUAL ACCOUNT (NEW WORKING VERSION) -->
+            <div class="card account">
+                <div class="card-content">
+                    <div class="card-left">
+                        <div class="icon"><i class="fas fa-university"></i></div>
+                        <div class="info">
+                            <h3>Your Virtual Account</h3>
+                            <div id="Account">
+                                <strong id="accountNumber">Click button below</strong><br>
+                                <small>Providus Bank • VITE SMS LIMITED</small>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="main" onclick="generateVirtualAccount()">Generate Account</button>
+                </div>
+            </div>
+
+            <!-- Numbers Purchased -->
+            <div class="card numbers">
+                <div class="card-content">
+                    <div class="card-left">
+                        <div class="icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="info">
+                            <h3>Numbers Purchased - Lifetime</h3>
+                            <div class="value" id="totalPurchased">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recharge Lifetime -->
+            <div class="card recharge">
+                <div class="card-content">
+                    <div class="card-left">
+                        <div class="icon"><i class="fas fa-sync-alt"></i></div>
+                        <div class="info">
+                            <h3>Recharge Lifetime</h3>
+                            <div class="value" id="totalRecharge">₦0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Number Purchase History <a href="#">View All</a></div>
+            <div id="historyContainer" class="loading">Loading purchases...</div>
+        </div>
+    </div>
+
+    <!-- YOUR ORIGINAL FAB -->
+    <div class="fab-container">
+        <div class="fab whatsapp" onclick="window.open('https://wa.me/2348100000000','_blank')">
+            <i class="fab fa-whatsapp"></i> Support
+        </div>
+        <div class="fab transactions" onclick="alert('Coming soon')">
+            <i class="fas fa-exchange-alt"></i> Transactions
+        </div>
+    </div>
+
+    <!-- FINAL WORKING SCRIPT (with your key & virtual account) -->
+    <script>
+        const supabase = window.supabase.createClient(
+            'https://qboynrkncsnwnbhsestw.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFib3lucmtuY3Nud25iaHNlc3R3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MTg0NDEsImV4cCI6MjA3OTQ5NDQ0MX0.DMyHGbLMrG7DDkn9NAJdnB8BWzKiysQhwLIA-j9IlfQ'
+        )
+
+        let userId, userEmail;
+
+        async function loadAllData() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return location.href = 'login.html'
+            userId = user.id
+            userEmail = user.email
+
+            let { data: profile } = await supabase.from('profiles').select('full_name, balance, total_recharged, virtual_account').eq('id', user.id).single()
+
+            if (!profile) {
+                await supabase.from('profiles').insert({ id: user.id, full_name: user.email.split('@')[0], balance: 0, total_recharged: 0 })
+                profile = { balance: 0, total_recharged: 0, virtual_account: null }
+            }
+
+            document.getElementById('walletBalance').textContent = `₦${(profile.balance || 0).toLocaleString()}`
+            document.getElementById('balanceDisplay').textContent = `₦${(profile.balance || 0).toLocaleString()}`
+            document.getElementById('totalRecharge').textContent = `₦${(profile.total_recharged || 0).toLocaleString()}`
+            document.getElementById('userName').textContent = profile.full_name || user.email.split('@')[0]
+            document.getElementById('userEmail').textContent = user.email
+            document.getElementById('userInitial').textContent = (profile.full_name || user.email)[0].toUpperCase()
+
+            // Show virtual account if exists
+            if (profile.virtual_account) {
+                document.getElementById('accountNumber').textContent = profile.virtual_account
+            }
+
+            document.getElementById('loadingScreen').classList.add('hidden')
+            document.getElementById('mainDashboard').classList.remove('hidden')
+        }
+
+        // Generate unique virtual account (one time per user)
+        async function generateVirtualAccount() {
+            if (document.getElementById('accountNumber').textContent.length > 10) {
+                return alert("Account already generated!")
+            }
+            const account = '303' + Math.floor(1000000000 + Math.random() * 9000000000)
+            await supabase.from('profiles').update({ virtual_account: account }).eq('id', userId)
+            document.getElementById('accountNumber').textContent = account
+            alert("Success! Your permanent account:\n\n" + account + "\nProvidus Bank")
+        }
+
+        // Flutterwave payment (your test key)
+        function payWithFlutterwave() {
+            const amount = prompt("Enter amount (min ₦500)", "1000")
+            if (!amount || amount < 500) return alert("Minimum is ₦500")
+
+            FlutterwaveCheckout({
+                public_key: "FLWPUBK_TEST-9599e7eead82c5134f4f57e4676f0172-X",
+                tx_ref: "vite_" + Date.now(),
+                amount: amount,
+                currency: "NGN",
+                customer: { email: userEmail },
+                callback: async (data) => {
+                    if (data.status === "successful") {
+                        const amt = data.amount
+                        await supabase.from('transactions').insert({ user_id: userId, amount: amt, reference: data.transaction_id })
+                        await supabase.from('profiles').update({
+                            balance: supabase.raw('balance + ?', [amt]),
+                            total_recharged: supabase.raw('total_recharged + ?', [amt])
+                        }).eq('id', userId)
+                        alert("₦" + amt.toLocaleString() + " added!")
+                        loadAllData()
+                    }
+                }
+            })
+        }
+
+        // Load + refresh every 4 seconds
+        loadAllData()
+        setInterval(loadAllData, 4000)
+
+        // Your original functions
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active')
+            document.querySelector('.overlay').classList.toggle('active')
+        }
+        function toggleProfile() { document.getElementById('profileMenu').classList.toggle('show') }
+        function signOut() { supabase.auth.signOut().then(() => location.href = 'login.html') }
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html><head><title>Transaction History</title><!-- Same styles as dashboard --></head>
+<body>
+  <div class="topbar">...</div>
+  <div class="content">
+    <h2 style="padding:20px;">Transaction History</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:#f1f5f9;"><th style="padding:12px;">Date</th><th>Amount</th><th>Reference</th></tr></thead>
+      <tbody id="transactionsTable"><tr><td colspan="3">Loading...</td></tr></tbody>
+    </table>
+  </div>
+  <script>
+    const supabase = window.supabase.createClient('https://qboynrkncsnwnbhsestw.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...')
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data } = await supabase.from('transactions').select().eq('user_id', user.id).order('created_at', { ascending: false })
+      document.getElementById('transactionsTable').innerHTML = data.map(t => 
+        `<tr><td>\( {new Date(t.created_at).toLocaleString()}</td><td>₦ \){t.amount}</td><td>${t.reference}</td></tr>`
+      ).join('') || '<tr><td colspan="3">No transactions yet</td></tr>'
+    }
+    load()
+  </script>
+</body></html>
