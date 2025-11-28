@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vite SMS • Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--primary:#4361ee;--green:#10b981;--bg:#f8fafc;--card:#fff;--error:#ef4444;--success:#10b981;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+    .container{max-width:420px;width:100%;}
+    .card{background:var(--card);border-radius:20px;padding:40px 32px;box-shadow:0 15px 40px rgba(0,0,0,0.1);text-align:center;}
+    .logo{font-size:32px;font-weight:900;background:linear-gradient(90deg,#10b981,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+    h1{font-size:26px;font-weight:800;margin:16px 0 8px;}
+    p{color:#64748b;margin-bottom:24px;}
+    input{width:100%;padding:16px 18px;margin:12px 0;border:2px solid #e2e8f0;border-radius:12px;font-size:16px;outline:none;transition:.3s;}
+    input:focus{border-color:var(--primary);}
+    button.main{width:100%;background:var(--primary);color:white;border:none;padding:16px;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;margin:16px 0;box-shadow:0 6px 20px rgba(67,97,238,0.3);transition:.3s;}
+    button.main:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(67,97,238,0.4);}
+    .link{color:var(--primary);text-decoration:none;font-weight:600;font-size:15px;}
+    .link:hover{text-decoration:underline;}
+    .message{padding:12px;border-radius:10px;margin:16px 0;font-weight:600;font-size:15px;display:none;}
+    .error{background:#fee2e2;color:var(--error);border:1px solid #fca5a5;}
+    .success{background:#dcfce7;color:var(--success);border:1px solid #86efac;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="logo">VITE SMS</div>
+      <h1>Welcome Back</h1>
+      <p>Login to your account</p>
+
+      <div id="message" class="message"></div>
+
+      <input type="email" id="email" placeholder="Email address" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button class="main" onclick="login()">Login</button>
+
+      <p>Don't have an account? <a href="register.html" class="link">Register here</a></p>
+    </div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://qboynrkncsnwnbhsestw.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFib3lucmtuY3Nud25iaHNlc3R3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MTg0NDEsImV4cCI6MjA3OTQ5NDQ0MX0.DMyHGbLMrG7DDkn9NAJdnB8BWzKiysQhwLIA-j9IlfQ'
+    );
+
+    async function login() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const message = document.getElementById('message');
+
+      if (!email || !password) {
+        showMessage("Please fill in all fields", "error");
+        return;
+      }
+
+      message.textContent = "Signing in...";
+      message.className = "message";
+      message.style.display = "block";
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        showMessage(error.message || "Login failed. Check your credentials.", "error");
+      } else {
+        showMessage("Login successful! Redirecting...", "success");
+        setTimeout(() => { location.href = "dashboard.html"; }, 1000);
+      }
+    }
+
+    function showMessage(text, type) {
+      const message = document.getElementById('message');
+      message.textContent = text;
+      message.className = `message ${type}`;
+      message.style.display = "block";
+    }
+
+    // Allow Enter key
+    document.addEventListener("keypress", e => { if (e.key === "Enter") login(); });
+  </script>
+</body>
+</html>

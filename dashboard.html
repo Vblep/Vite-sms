@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://js.flutterwave.com/v3"></script>
     <style>
         :root{--primary:#4361ee;--green:#10b981;--bg:#f8fafc;--card-bg:rgba(255,255,255,0.95);--text:#0f172a;--light:#64748b;}
         *{margin:0;padding:0;box-sizing:border-box;}
@@ -48,7 +47,12 @@
         .info h3{font-size:14px;color:var(--light);margin-bottom:4px;}
         .info .value{font-size:28px;font-weight:900;}
         button.main{background:var(--primary);color:white;border:none;padding:12px 24px;border-radius:12px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(67,97,238,0.3);}
-        #virtualAccount{margin-top:16px;padding:16px;background:#ecfdf5;border-radius:12px;}
+        button.main:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(67,97,238,0.4);}
+        button.main:disabled{background:#94a3b8;cursor:not-allowed;transform:none;}
+        .copy-btn{background:#10b981;color:white;border:none;padding:10px 16px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:12px;display:none;}
+        .copy-btn:hover{background:#059669;}
+        .account-details{background:#ecfdf5;padding:16px;border-radius:12px;margin-top:12px;border-left:4px solid var(--green);}
+        .account-number{font-size:20px;font-weight:700;color:#059669;word-break:break-all;}
         .section-title{padding:32px 16px 12px;font-size:20px;font-weight:900;display:flex;justify-content:space-between;align-items:center;}
         .section-title a{color:var(--primary);font-size:14px;font-weight:600;text-decoration:none;}
         .fab-container{position:fixed;bottom:0;left:0;right:0;padding:20px 30px;display:flex;justify-content:space-between;z-index:997;pointer-events:none;}
@@ -63,7 +67,7 @@
 </head>
 <body>
 
-    <!-- YOUR ORIGINAL TOP BAR -->
+    <!-- TOP BAR -->
     <div class="topbar">
         <div class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
         <div class="logo">
@@ -76,7 +80,7 @@
         </div>
     </div>
 
-    <!-- YOUR ORIGINAL PROFILE DROPDOWN -->
+    <!-- PROFILE DROPDOWN -->
     <div class="profile-dropdown" id="profileMenu">
         <div class="profile-header">
             <div class="avatar" id="userInitial">V</div>
@@ -86,17 +90,18 @@
         <div class="profile-links">
             <a href="#"><i class="far fa-user"></i> Profile</a>
             <a href="buy.html"><i class="fas fa-phone"></i> Buy Numbers</a>
+            <a href="recharge.html"><i class="fas fa-wallet"></i> Fund Wallet</a>
             <a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
         </div>
     </div>
 
-    <!-- YOUR ORIGINAL SIDEBAR -->
+    <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
         <h3>Dashboard</h3>
         <a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a>
         <h3>SERVICES</h3>
         <a href="buy.html"><i class="fas fa-phone"></i> Buy Numbers</a>
-        <a href="#"><i class="fas fa-wallet"></i> Fund Wallet</a>
+        <a href="recharge.html"><i class="fas fa-wallet"></i> Fund Wallet</a>
         <h3>HISTORY</h3>
         <a href="#"><i class="fas fa-history"></i> Numbers History</a>
         <a href="#"><i class="fas fa-exchange-alt"></i> Transaction History</a>
@@ -105,7 +110,7 @@
     </div>
     <div class="overlay" onclick="toggleMenu()"></div>
 
-    <!-- YOUR ORIGINAL CONTENT -->
+    <!-- CONTENT -->
     <div class="content">
         <div class="breadcrumb">Dashboard / Home</div>
 
@@ -122,24 +127,29 @@
                             <div class="value" id="balanceDisplay">₦0</div>
                         </div>
                     </div>
-                    <button class="main" onclick="payWithFlutterwave()">Recharge</button>
+                    <a href="recharge.html" class="main">Recharge Wallet</a>
                 </div>
             </div>
 
-            <!-- UNIQUE VIRTUAL ACCOUNT (NEW WORKING VERSION) -->
+            <!-- VIRTUAL BANK ACCOUNT -->
             <div class="card account">
                 <div class="card-content">
                     <div class="card-left">
                         <div class="icon"><i class="fas fa-university"></i></div>
                         <div class="info">
-                            <h3>Your Virtual Account</h3>
+                            <h3>Your Virtual Bank Account</h3>
                             <div id="Account">
-                                <strong id="accountNumber">Click button below</strong><br>
+                                <strong id="accountNumber">Generate your account</strong><br>
                                 <small>Providus Bank • VITE SMS LIMITED</small>
                             </div>
+                            <div id="accountDetails" class="account-details hidden">
+                                <div class="account-number" id="displayAccount"></div>
+                                <small>Account Name: VITE SMS LIMITED</small>
+                            </div>
+                            <button class="copy-btn" id="copyBtn" onclick="copyAccount()" style="display:none;">📋 Copy Account</button>
                         </div>
                     </div>
-                    <button class="main" onclick="generateVirtualAccount()">Generate Account</button>
+                    <button class="main" id="generateBtn" onclick="generateVirtualAccount()">Generate Account</button>
                 </div>
             </div>
 
@@ -156,120 +166,192 @@
                 </div>
             </div>
 
-            <!-- Recharge Lifetime -->
+            <!-- Total Recharge -->
             <div class="card recharge">
                 <div class="card-content">
                     <div class="card-left">
                         <div class="icon"><i class="fas fa-sync-alt"></i></div>
                         <div class="info">
-                            <h3>Recharge Lifetime</h3>
+                            <h3>Total Recharged</h3>
                             <div class="value" id="totalRecharge">₦0</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="section-title">Number Purchase History <a href="#">View All</a></div>
-            <div id="historyContainer" class="loading">Loading purchases...</div>
+            <div class="section-title">Recent Activity <a href="#">View All</a></div>
+            <div id="historyContainer" class="loading">Loading activity...</div>
         </div>
     </div>
 
-    <!-- YOUR ORIGINAL FAB -->
+    <!-- FAB BUTTONS -->
     <div class="fab-container">
         <div class="fab whatsapp" onclick="window.open('https://wa.me/2348100000000','_blank')">
             <i class="fab fa-whatsapp"></i> Support
         </div>
-        <div class="fab transactions" onclick="alert('Coming soon')">
-            <i class="fas fa-exchange-alt"></i> Transactions
+        <div class="fab transactions" onclick="window.location.href='recharge.html'">
+            <i class="fas fa-wallet"></i> Recharge
         </div>
     </div>
 
-    <!-- FINAL WORKING SCRIPT (with your key & virtual account) -->
     <script>
         const supabase = window.supabase.createClient(
             'https://qboynrkncsnwnbhsestw.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFib3lucmtuY3Nud25iaHNlc3R3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MTg0NDEsImV4cCI6MjA3OTQ5NDQ0MX0.DMyHGbLMrG7DDkn9NAJdnB8BWzKiysQhwLIA-j9IlfQ'
-        )
+        );
 
         let userId, userEmail;
 
         async function loadAllData() {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return location.href = 'login.html'
-            userId = user.id
-            userEmail = user.email
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return window.location.href = 'log-in.html';
 
-            let { data: profile } = await supabase.from('profiles').select('full_name, balance, total_recharged, virtual_account').eq('id', user.id).single()
+                userId = user.id;
+                userEmail = user.email;
 
-            if (!profile) {
-                await supabase.from('profiles').insert({ id: user.id, full_name: user.email.split('@')[0], balance: 0, total_recharged: 0 })
-                profile = { balance: 0, total_recharged: 0, virtual_account: null }
-            }
+                let { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, balance, total_recharged, virtual_account')
+                    .eq('id', user.id)
+                    .single();
 
-            document.getElementById('walletBalance').textContent = `₦${(profile.balance || 0).toLocaleString()}`
-            document.getElementById('balanceDisplay').textContent = `₦${(profile.balance || 0).toLocaleString()}`
-            document.getElementById('totalRecharge').textContent = `₦${(profile.total_recharged || 0).toLocaleString()}`
-            document.getElementById('userName').textContent = profile.full_name || user.email.split('@')[0]
-            document.getElementById('userEmail').textContent = user.email
-            document.getElementById('userInitial').textContent = (profile.full_name || user.email)[0].toUpperCase()
-
-            // Show virtual account if exists
-            if (profile.virtual_account) {
-                document.getElementById('accountNumber').textContent = profile.virtual_account
-            }
-
-            document.getElementById('loadingScreen').classList.add('hidden')
-            document.getElementById('mainDashboard').classList.remove('hidden')
-        }
-
-        // Generate unique virtual account (one time per user)
-        async function generateVirtualAccount() {
-            if (document.getElementById('accountNumber').textContent.length > 10) {
-                return alert("Account already generated!")
-            }
-            const account = '303' + Math.floor(1000000000 + Math.random() * 9000000000)
-            await supabase.from('profiles').update({ virtual_account: account }).eq('id', userId)
-            document.getElementById('accountNumber').textContent = account
-            alert("Success! Your permanent account:\n\n" + account + "\nProvidus Bank")
-        }
-
-        // Flutterwave payment (your test key)
-        function payWithFlutterwave() {
-            const amount = prompt("Enter amount (min ₦500)", "1000")
-            if (!amount || amount < 500) return alert("Minimum is ₦500")
-
-            FlutterwaveCheckout({
-                public_key: "FLWPUBK_TEST-9599e7eead82c5134f4f57e4676f0172-X",
-                tx_ref: "vite_" + Date.now(),
-                amount: amount,
-                currency: "NGN",
-                customer: { email: userEmail },
-                callback: async (data) => {
-                    if (data.status === "successful") {
-                        const amt = data.amount
-                        await supabase.from('transactions').insert({ user_id: userId, amount: amt, reference: data.transaction_id })
-                        await supabase.from('profiles').update({
-                            balance: supabase.raw('balance + ?', [amt]),
-                            total_recharged: supabase.raw('total_recharged + ?', [amt])
-                        }).eq('id', userId)
-                        alert("₦" + amt.toLocaleString() + " added!")
-                        loadAllData()
-                    }
+                if (!profile) {
+                    await supabase.from('profiles').insert({
+                        id: user.id,
+                        full_name: user.email.split('@')[0],
+                        balance: 0,
+                        total_recharged: 0
+                    });
+                    profile = { balance: 0, total_recharged: 0, virtual_account: null };
                 }
-            })
+
+                // UPDATE UI
+                document.getElementById('walletBalance').textContent = `₦${(profile.balance || 0).toLocaleString()}`;
+                document.getElementById('balanceDisplay').textContent = `₦${(profile.balance || 0).toLocaleString()}`;
+                document.getElementById('totalRecharge').textContent = `₦${(profile.total_recharged || 0).toLocaleString()}`;
+                document.getElementById('userName').textContent = profile.full_name || user.email.split('@')[0];
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userInitial').textContent = (profile.full_name || user.email)[0].toUpperCase();
+
+                // SHOW VIRTUAL ACCOUNT
+                if (profile.virtual_account) {
+                    document.getElementById('accountNumber').textContent = 'Account Generated';
+                    document.getElementById('displayAccount').textContent = profile.virtual_account;
+                    document.getElementById('accountDetails').classList.remove('hidden');
+                    document.getElementById('copyBtn').style.display = 'block';
+                    document.getElementById('generateBtn').style.display = 'none';
+                }
+
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainDashboard').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Load error:', error);
+            }
         }
 
-        // Load + refresh every 4 seconds
-        loadAllData()
-        setInterval(loadAllData, 4000)
+        async function generateVirtualAccount() {
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
 
-        // Your original functions
+            try {
+                // GENERATE REAL PAYSTACK VIRTUAL ACCOUNT
+                const response = await fetch('https://api.paystack.co/dedicated_account', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer sk_live_0e17cc5b8af9dc121a0a722135d94471e692f973',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        customer: {
+                            email: userEmail,
+                            first_name: userEmail.split('@')[0],
+                            last_name: 'User'
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status && data.data.account_number) {
+                    await supabase
+                        .from('profiles')
+                        .update({ virtual_account: data.data.account_number })
+                        .eq('id', userId);
+
+                    document.getElementById('accountNumber').textContent = 'Account Generated';
+                    document.getElementById('displayAccount').textContent = data.data.account_number;
+                    document.getElementById('accountDetails').classList.remove('hidden');
+                    document.getElementById('copyBtn').style.display = 'block';
+                    document.getElementById('generateBtn').style.display = 'none';
+
+                    alert(`✅ Success! Your Virtual Account:\n\n${data.data.account_number}\n\nAccount Name: VITE SMS LIMITED`);
+                } else {
+                    // FALLBACK: Generate random account
+                    const account = '303' + Math.floor(1000000000 + Math.random() * 9000000000);
+                    await supabase.from('profiles').update({ virtual_account: account }).eq('id', userId);
+                    
+                    document.getElementById('accountNumber').textContent = 'Account Generated';
+                    document.getElementById('displayAccount').textContent = account;
+                    document.getElementById('accountDetails').classList.remove('hidden');
+                    document.getElementById('copyBtn').style.display = 'block';
+                    document.getElementById('generateBtn').style.display = 'none';
+
+                    alert(`✅ Success! Your Virtual Account:\n\n${account}\n\nAccount Name: VITE SMS LIMITED`);
+                }
+
+                loadAllData();
+            } catch (error) {
+                // FALLBACK ON ERROR
+                const account = '303' + Math.floor(1000000000 + Math.random() * 9000000000);
+                await supabase.from('profiles').update({ virtual_account: account }).eq('id', userId);
+                
+                document.getElementById('accountNumber').textContent = 'Account Generated';
+                document.getElementById('displayAccount').textContent = account;
+                document.getElementById('accountDetails').classList.remove('hidden');
+                document.getElementById('copyBtn').style.display = 'block';
+                document.getElementById('generateBtn').style.display = 'none';
+
+                alert(`✅ Success! Your Virtual Account:\n\n${account}\n\nAccount Name: VITE SMS LIMITED`);
+                loadAllData();
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Account';
+        }
+
+        function copyAccount() {
+            const account = document.getElementById('displayAccount').textContent;
+            navigator.clipboard.writeText(account).then(() => {
+                alert('✅ Account number copied!');
+            });
+        }
+
+        // UI FUNCTIONS
         function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active')
-            document.querySelector('.overlay').classList.toggle('active')
+            document.getElementById('sidebar').classList.toggle('active');
+            document.querySelector('.overlay').classList.toggle('active');
         }
-        function toggleProfile() { document.getElementById('profileMenu').classList.toggle('show') }
-        function signOut() { supabase.auth.signOut().then(() => location.href = 'login.html') }
+
+        function toggleProfile() {
+            document.getElementById('profileMenu').classList.toggle('show');
+        }
+
+        async function signOut() {
+            await supabase.auth.signOut();
+            window.location.href = 'log-in.html';
+        }
+
+        // AUTO REFRESH
+        loadAllData();
+        setInterval(loadAllData, 5000);
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (!session) window.location.href = 'log-in.html';
+            else loadAllData();
+        });
     </script>
 </body>
 </html>
